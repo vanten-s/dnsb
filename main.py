@@ -136,7 +136,7 @@ def generate_response( message: bytes ):
     return s.recvfrom( 512 )[ 0 ]
 
 listener = socket.socket( socket.AF_INET, socket.SOCK_DGRAM )
-listener.bind( ('127.0.0.1', 53) )
+listener.bind( ('', 53) )
 
 while True:
     msg, addr = listener.recvfrom( 512 )

@@ -125,7 +125,7 @@ def generate_response( message: bytes ):
     for query in queries:
         domain, q_type, q_class = parse_query( query )
         if ( q_type == 1 or q_type == 28 ) and "ad" in domain:
-            print(domain)
+            logger.log_info( f"Someone Asked For {domain} And It's Probably An Advertisement" )
             answer = create_answer( 12, 1, q_class, 2**16, b'\x11\x11\x11\x11' )
             flags = generate_flags( 1, 0, 0, 0, 1, 0, 0, 0 )
             message = create_dns_message( tid, flags, nq, b'\x00\x01', b'\x00\x00', b'\x00\x00', queries[ 0 ], answer )

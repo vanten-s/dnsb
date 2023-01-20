@@ -121,7 +121,12 @@ def parse_dns_message( message: bytes ):
 # Apply filter and generate response from that
 def generate_response( message: bytes ):
 
-    tid, flags, nq, na, nauth, naddr, queries = parse_dns_message( message )
+    try:
+        tid, flags, nq, na, nauth, naddr, queries = parse_dns_message( message )
+
+    except ValueError as e:
+        log_error( f"Something weird happened {e}" )
+
     for query in queries:
         domain, q_type, q_class = parse_query( query )
         if ( q_type == 1 or q_type == 28 ) and "ad" in domain:

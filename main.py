@@ -143,19 +143,20 @@ def parse_dns_message( message: bytes ):
     return transaction_id, flags, n_questions, n_answers, n_authrr, n_addrr, queries
 
 # Apply filter and generate response from that
-def generate_response( message: bytes ):
+def generate_response( message: bytes, addr ):
 
     try:
         tid, flags, nq, na, nauth, naddr, queries = parse_dns_message( message )
 
     except ValueError as e:
-        log_error( f"Something weird happened {e}" )
+        logger.log_error( f"Something weird happened {e}" )
+        print( message, addr )
+        return b''
 
     for query in queries:
         domain, q_type, q_class = parse_query( query )
-        print( domain )
         if domain in hosts.keys( ):
-            logger.log_info( f"Someone Asked For {domain} And I Returned {hosts[ domain ]}" )
+            logger.log_info( f"{addr} Asked For {domain} And I Returned {hosts[ domain ]}" )
             answer = create_answer( 12, 1, q_class, 2**16, ip_to_bytes( hosts[domain] ) )
             flags = generate_flags( 1, 0, 0, 0, 1, 0, 0, 0 )
             message = create_dns_message( tid, flags, nq, b'\x00\x01', b'\x00\x00', b'\x00\x00', queries[ 0 ], answer )
@@ -166,11 +167,12 @@ def generate_response( message: bytes ):
     return s.recvfrom( 512 )[ 0 ]
 
 listener = socket.socket( socket.AF_INET, socket.SOCK_DGRAM )
-listener.bind( ('127.0.0.1', 53) )
+listener.setsockopt( socket.SOL_SOCKET, socket.SO_REUSEADDR, 1 )
+listener.bind( ('', 53) )
 
 while True:
     msg, addr = listener.recvfrom( 512 )
-    listener.sendto( generate_response( msg ), addr )
+    listener.sendto( generate_response( msg, addr ), addr )
 
 
 

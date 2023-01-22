@@ -1,10 +1,14 @@
 
 import socket
 import logger
+import re
 
 # Load hosts file
-with open( "hosts", "r" ) as f:
+with open( "./hosts-plain-text", "r" ) as f:
     hosts_raw = f.readlines( )
+
+with open( "./hosts-regex", "r" ) as f:
+    hosts_regex = f.readlines( )
 
 # Loop over lines and remove comments + split hostname and IP
 hosts = { }
@@ -15,6 +19,12 @@ for line in hosts_raw:
 
     sections = line.split( " " )
     hosts[ sections[ 1 ] ] = sections[ 0 ]
+
+def check_regexes( domain: str ):
+    for regex in hosts_regex:
+        if re.match( regex, domain ): return True
+
+    return False
 
 def create_query( name: str, query_type: int, query_class: int ):
     query = b'' # Initialize queries
@@ -158,6 +168,13 @@ def generate_response( message: bytes, addr ):
         if domain in hosts.keys( ):
             logger.log_info( f"{addr} Asked For {domain} And I Returned {hosts[ domain ]}" )
             answer = create_answer( 12, 1, q_class, 2**16, ip_to_bytes( hosts[domain] ) )
+            flags = generate_flags( 1, 0, 0, 0, 1, 0, 0, 0 )
+            message = create_dns_message( tid, flags, nq, b'\x00\x01', b'\x00\x00', b'\x00\x00', queries[ 0 ], answer )
+            return message
+
+        elif check_regexes( domain ):
+            logger.log_info( f"{addr} Asked For {domain} And I Returned 0.0.0.0" )
+            answer = create_answer( 12, 1, q_class, 2**16, ip_to_bytes( "0.0.0.0" ) )
             flags = generate_flags( 1, 0, 0, 0, 1, 0, 0, 0 )
             message = create_dns_message( tid, flags, nq, b'\x00\x01', b'\x00\x00', b'\x00\x00', queries[ 0 ], answer )
             return message

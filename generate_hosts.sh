@@ -2,6 +2,7 @@
 
 # Generate hosts file from blocklist/
 
-cat ./blocklists/* > hosts
+cat ./blocklists-plain-text/* > hosts-plain-text
+cat ./blocklists-regex/*      > hosts-regex
 
 
